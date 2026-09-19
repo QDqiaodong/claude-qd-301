@@ -1,5 +1,6 @@
 package com.construction.site.controller;
 
+import com.construction.site.dto.MaterialStockView;
 import com.construction.site.entity.Material;
 import com.construction.site.service.MaterialService;
 import java.util.List;
@@ -23,9 +24,9 @@ public class MaterialController {
     }
 
     @GetMapping
-    public List<Material> list(@RequestParam(required = false) Long yardId,
-                               @RequestParam(required = false) String state,
-                               @RequestParam(required = false) String keyword) {
+    public List<MaterialStockView> list(@RequestParam(required = false) Long yardId,
+                                        @RequestParam(required = false) String state,
+                                        @RequestParam(required = false) String keyword) {
         return service.query(yardId, state, keyword);
     }
 

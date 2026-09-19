@@ -1,11 +1,15 @@
 package com.construction.site.service;
 
 import com.construction.site.dto.BizException;
+import com.construction.site.dto.MaterialStockView;
 import com.construction.site.entity.Material;
 import com.construction.site.entity.Yard;
 import com.construction.site.repository.MaterialRepository;
+import com.construction.site.repository.PourReservationRepository;
 import com.construction.site.repository.YardRepository;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,18 +18,28 @@ public class MaterialService {
 
     private final MaterialRepository materials;
     private final YardRepository yards;
+    private final PourReservationRepository reservations;
 
-    public MaterialService(MaterialRepository materials, YardRepository yards) {
+    public MaterialService(MaterialRepository materials, YardRepository yards,
+                           PourReservationRepository reservations) {
         this.materials = materials;
         this.yards = yards;
+        this.reservations = reservations;
     }
 
-    public List<Material> query(Long yardId, String state, String keyword) {
+    /**
+     * 台账每一行都带三个数：账面结存、占用中预扣、可用余量（能再预扣也能出场）。
+     * 账面结存和可用余量是两列，不许混着看。
+     */
+    public List<MaterialStockView> query(Long yardId, String state, String keyword) {
+        Map<Long, Long> occupied = reservations.sumOccupiedGroupByMaterial().stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> ((Number) row[1]).longValue()));
         return materials.findAllByOrderByIdAsc().stream()
                 .filter(m -> yardId == null || yardId.equals(m.yardId))
                 .filter(m -> state == null || state.isBlank() || state.equals(m.state))
                 .filter(m -> keyword == null || keyword.isBlank()
                         || m.no.contains(keyword.trim()) || m.title.contains(keyword.trim()))
+                .map(m -> MaterialStockView.of(m, occupied.getOrDefault(m.id, 0L)))
                 .toList();
     }
 

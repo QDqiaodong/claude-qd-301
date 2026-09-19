@@ -3,7 +3,7 @@
     <header class="bar">
       <div>
         <h2>材料台账</h2>
-        <p class="tip">归属堆场可以直接在表格里换；结存是流水累出来的，这里改不动</p>
+        <p class="tip">归属堆场可以直接在表格里换；账面结存是流水累出来的，可用余量 = 结存 − 占用中预扣，能再预扣也能出场，两列分开看</p>
       </div>
       <button class="act-btn solid" @click="openCreate">登记材料</button>
     </header>
@@ -11,7 +11,8 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>编号</th><th>名称</th><th>类别</th><th>所在堆场</th><th class="right">结存</th><th>状态</th>
+          <th>编号</th><th>名称</th><th>类别</th><th>所在堆场</th>
+          <th class="right">账面结存</th><th class="right">预扣占用</th><th class="right">可用余量</th><th>状态</th>
         </tr>
       </thead>
       <tbody>
@@ -25,6 +26,8 @@
             </select>
           </td>
           <td class="right num">{{ m.balance }}</td>
+          <td class="right held">{{ m.reserved }}</td>
+          <td class="right avail">{{ m.available }}</td>
           <td :class="m.state === '在库' ? 'ok' : 'mute'">{{ m.state }}</td>
         </tr>
       </tbody>
@@ -107,6 +110,8 @@ export default {
 .right { text-align: right; }
 .mono { font-family: ui-monospace, Menlo, monospace; color: #8f8f8f; }
 .num { font-weight: 600; color: var(--el-color-primary-dark-2); }
+.held { color: #b5793a; }
+.avail { font-weight: 600; color: #2f7a3f; }
 .ok { color: var(--el-color-primary-dark-2); }
 .mute { color: #b5b5b5; }
 .inline-select { border: 1px solid #e5e5e5; border-radius: 5px; padding: 3px 8px; font-size: 12px;

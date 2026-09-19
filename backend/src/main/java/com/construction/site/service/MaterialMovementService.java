@@ -5,6 +5,7 @@ import com.construction.site.entity.Material;
 import com.construction.site.entity.MaterialMovement;
 import com.construction.site.repository.MaterialMovementRepository;
 import com.construction.site.repository.MaterialRepository;
+import com.construction.site.repository.PourReservationRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,16 +13,21 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 进出场流水 —— 这张仓业务的重心。
  * 材料的结存不是手填的，而是进场加、出场减，一笔一笔累出来的。
+ * 出场拦不拦看「可用余量」：账面结存扣掉占用中的浇筑预扣，剩下的才出得去，
+ * 不然预扣台和流水两边对不齐。
  */
 @Service
 public class MaterialMovementService {
 
     private final MaterialMovementRepository movements;
     private final MaterialRepository materials;
+    private final PourReservationRepository reservations;
 
-    public MaterialMovementService(MaterialMovementRepository movements, MaterialRepository materials) {
+    public MaterialMovementService(MaterialMovementRepository movements, MaterialRepository materials,
+                                   PourReservationRepository reservations) {
         this.movements = movements;
         this.materials = materials;
+        this.reservations = reservations;
     }
 
     public List<MaterialMovement> query(Long materialId, String direction) {
@@ -57,7 +63,12 @@ public class MaterialMovementService {
 
         int balance = material.balance == null ? 0 : material.balance;
         if ("出场".equals(form.direction)) {
-            if (balance < form.amount) {
+            int available = balance - occupiedOf(material.id);
+            if (available < form.amount) {
+                if (available != balance) {
+                    throw new BizException("这批材料账面结存 " + balance + "，其中 " + (balance - available)
+                            + " 被浇筑预扣占着，能出场的只剩 " + available + "，出不了 " + form.amount);
+                }
                 throw new BizException("这批材料只剩 " + balance + "，出不了 " + form.amount);
             }
             balance -= form.amount;
@@ -71,6 +82,12 @@ public class MaterialMovementService {
         form.no = form.no.trim();
         form.handler = form.handler == null || form.handler.isBlank() ? "未填" : form.handler;
         return movements.save(form);
+    }
+
+    /** 这条材料被「占用中」的浇筑预扣占走了多少 */
+    private int occupiedOf(Long materialId) {
+        Long occupied = reservations.sumOccupiedByMaterialId(materialId);
+        return occupied == null ? 0 : occupied.intValue();
     }
 
     /**

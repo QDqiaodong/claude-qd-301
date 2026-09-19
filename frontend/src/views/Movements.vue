@@ -3,7 +3,7 @@
     <header class="bar">
       <div>
         <h2>进出场流水</h2>
-        <p class="tip">结存是一笔一笔累出来的：进场加、出场减，出不掉比结存还多的量</p>
+        <p class="tip">结存是一笔一笔累出来的：进场加、出场减；出场按可用余量拦——结存扣掉占用中的浇筑预扣，剩下的才出得去</p>
       </div>
       <div class="picker">
         <span>看哪批材料</span>
@@ -15,9 +15,11 @@
 
     <div class="balance-strip" v-if="current">
       <div class="b-item">
-        <span class="b-label">当前结存</span>
+        <span class="b-label">账面结存</span>
         <strong class="b-value">{{ current.balance }}</strong>
       </div>
+      <div class="b-item"><span class="b-label">预扣占用</span><strong>{{ current.reserved }}</strong></div>
+      <div class="b-item"><span class="b-label">可用余量</span><strong class="b-value">{{ current.available }}</strong></div>
       <div class="b-item"><span class="b-label">进场合计</span><strong>{{ sumOf('进场') }}</strong></div>
       <div class="b-item"><span class="b-label">出场合计</span><strong>{{ sumOf('出场') }}</strong></div>
       <div class="b-item"><span class="b-label">材料状态</span><strong>{{ current.state }}</strong></div>
@@ -132,7 +134,7 @@ export default {
 .picker { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #777; }
 .picker select { border: 1px solid #e5e5e5; border-radius: 6px; padding: 8px 10px; font-size: 13px;
   background: #fff; min-width: 200px; }
-.balance-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #ececec;
+.balance-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: #ececec;
   border: 1px solid #ececec; border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
 .b-item { background: #fff; padding: 14px 16px; display: flex; flex-direction: column; gap: 5px; }
 .b-label { font-size: 12px; color: #9b9b9b; }
