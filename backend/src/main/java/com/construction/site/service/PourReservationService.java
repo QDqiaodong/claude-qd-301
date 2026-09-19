@@ -190,10 +190,10 @@ public class PourReservationService {
                     + "，兑现没成，预扣还挂在占用中");
         }
 
-        if (form.movementNo == null || form.movementNo.isBlank()) {
+        if (form.no == null || form.no.isBlank()) {
             throw new BizException("兑现要补一笔出场流水，流水单号得填");
         }
-        String movementNo = form.movementNo.trim();
+        String movementNo = form.no.trim();
         if (movements.findByNo(movementNo).isPresent()) {
             throw new BizException("流水单号 " + movementNo + " 已经用过了，兑现没成，预扣还挂在占用中");
         }
