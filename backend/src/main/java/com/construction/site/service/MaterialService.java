@@ -2,10 +2,14 @@ package com.construction.site.service;
 
 import com.construction.site.dto.BizException;
 import com.construction.site.entity.Material;
+import com.construction.site.entity.PourReservation;
 import com.construction.site.entity.Yard;
 import com.construction.site.repository.MaterialRepository;
+import com.construction.site.repository.PourReservationRepository;
 import com.construction.site.repository.YardRepository;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,19 +18,33 @@ public class MaterialService {
 
     private final MaterialRepository materials;
     private final YardRepository yards;
+    private final PourReservationRepository reservations;
 
-    public MaterialService(MaterialRepository materials, YardRepository yards) {
+    public MaterialService(MaterialRepository materials, YardRepository yards,
+                           PourReservationRepository reservations) {
         this.materials = materials;
         this.yards = yards;
+        this.reservations = reservations;
     }
 
     public List<Material> query(Long yardId, String state, String keyword) {
-        return materials.findAllByOrderByIdAsc().stream()
+        // 占用中的预扣按材料汇总 —— 台账上「账面结存」和「可用余量」是两列，都得看得见
+        Map<Long, Integer> occupiedByMaterial = new HashMap<>();
+        for (PourReservation r : reservations.findByState("占用中")) {
+            occupiedByMaterial.merge(r.materialId, r.amount == null ? 0 : r.amount, Integer::sum);
+        }
+        List<Material> list = materials.findAllByOrderByIdAsc().stream()
                 .filter(m -> yardId == null || yardId.equals(m.yardId))
                 .filter(m -> state == null || state.isBlank() || state.equals(m.state))
                 .filter(m -> keyword == null || keyword.isBlank()
                         || m.no.contains(keyword.trim()) || m.title.contains(keyword.trim()))
                 .toList();
+        for (Material m : list) {
+            int occupied = occupiedByMaterial.getOrDefault(m.id, 0);
+            m.occupied = occupied;
+            m.available = (m.balance == null ? 0 : m.balance) - occupied;
+        }
+        return list;
     }
 
     /**

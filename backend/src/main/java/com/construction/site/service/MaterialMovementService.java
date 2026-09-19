@@ -5,6 +5,7 @@ import com.construction.site.entity.Material;
 import com.construction.site.entity.MaterialMovement;
 import com.construction.site.repository.MaterialMovementRepository;
 import com.construction.site.repository.MaterialRepository;
+import com.construction.site.repository.PourReservationRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,16 +13,21 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 进出场流水 —— 这张仓业务的重心。
  * 材料的结存不是手填的，而是进场加、出场减，一笔一笔累出来的。
+ * 出场拦不拦看「可用余量」：账面结存扣掉占用中的浇筑预扣，剩下的才出得去 ——
+ * 不然预扣台压着一批料，流水这边照出不误，两边就对不上了。
  */
 @Service
 public class MaterialMovementService {
 
     private final MaterialMovementRepository movements;
     private final MaterialRepository materials;
+    private final PourReservationRepository reservations;
 
-    public MaterialMovementService(MaterialMovementRepository movements, MaterialRepository materials) {
+    public MaterialMovementService(MaterialMovementRepository movements, MaterialRepository materials,
+                                   PourReservationRepository reservations) {
         this.movements = movements;
         this.materials = materials;
+        this.reservations = reservations;
     }
 
     public List<MaterialMovement> query(Long materialId, String direction) {
@@ -57,7 +63,15 @@ public class MaterialMovementService {
 
         int balance = material.balance == null ? 0 : material.balance;
         if ("出场".equals(form.direction)) {
-            if (balance < form.amount) {
+            int occupied = reservations.findByMaterialIdAndState(material.id, "占用中").stream()
+                    .mapToInt(r -> r.amount == null ? 0 : r.amount)
+                    .sum();
+            int available = balance - occupied;
+            if (available < form.amount) {
+                if (occupied > 0) {
+                    throw new BizException("这批材料账面结存 " + balance + "，其中 " + occupied
+                            + " 被浇筑预扣占着，最多还能出场 " + available + "，出不了 " + form.amount);
+                }
                 throw new BizException("这批材料只剩 " + balance + "，出不了 " + form.amount);
             }
             balance -= form.amount;

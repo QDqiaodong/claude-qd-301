@@ -32,6 +32,15 @@ export const movementApi = {
   save: (id, payload) => client.put(`/movements/${id}`, payload)
 }
 
+/** 浇筑配料预扣 */
+export const reservationApi = {
+  fetch: (params) => client.get('/reservations', { params }),
+  add: (payload) => client.post('/reservations', payload),
+  save: (id, payload) => client.put(`/reservations/${id}`, payload),
+  fulfill: (id, payload) => client.post(`/reservations/${id}/fulfill`, payload),
+  void: (id) => client.post(`/reservations/${id}/void`)
+}
+
 /** 安全巡检 */
 export const inspectionApi = {
   fetch: (params) => client.get('/inspections', { params }),

@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 /**
  * 材料 —— 堆在某个堆场里的钢筋、水泥、砂石。
@@ -42,4 +43,15 @@ public class Material {
     /** 在库 / 已清空 */
     @Column(nullable = false, length = 16)
     public String state;
+
+    /** 占用中的浇筑预扣合计（台账展示用，不落库，由预扣单现算） */
+    @Transient
+    public Integer occupied;
+
+    /**
+     * 可用余量 = 账面结存 − 占用中预扣（台账展示用，不落库）。
+     * 还能再预扣、还能出场的都是这个数；和账面结存是两列，别混。
+     */
+    @Transient
+    public Integer available;
 }

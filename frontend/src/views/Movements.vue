@@ -3,7 +3,7 @@
     <header class="bar">
       <div>
         <h2>进出场流水</h2>
-        <p class="tip">结存是一笔一笔累出来的：进场加、出场减，出不掉比结存还多的量</p>
+        <p class="tip">结存是一笔一笔累出来的：进场加、出场减；出场看的是可出场余量 —— 被浇筑预扣占着的量出不了</p>
       </div>
       <div class="picker">
         <span>看哪批材料</span>
@@ -15,8 +15,16 @@
 
     <div class="balance-strip" v-if="current">
       <div class="b-item">
-        <span class="b-label">当前结存</span>
+        <span class="b-label">账面结存</span>
         <strong class="b-value">{{ current.balance }}</strong>
+      </div>
+      <div class="b-item">
+        <span class="b-label">占用中预扣</span>
+        <strong>{{ num(current.occupied) }}</strong>
+      </div>
+      <div class="b-item">
+        <span class="b-label">可出场余量</span>
+        <strong class="b-value">{{ num(current.available) }}</strong>
       </div>
       <div class="b-item"><span class="b-label">进场合计</span><strong>{{ sumOf('进场') }}</strong></div>
       <div class="b-item"><span class="b-label">出场合计</span><strong>{{ sumOf('出场') }}</strong></div>
@@ -102,6 +110,9 @@ export default {
         .filter((r) => r.direction === direction)
         .reduce((total, r) => total + r.amount, 0)
     },
+    num(v) {
+      return v == null ? 0 : v
+    },
     async submit() {
       if (!this.currentId) {
         this.$message.warning('先选一批材料')
@@ -132,11 +143,11 @@ export default {
 .picker { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #777; }
 .picker select { border: 1px solid #e5e5e5; border-radius: 6px; padding: 8px 10px; font-size: 13px;
   background: #fff; min-width: 200px; }
-.balance-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #ececec;
+.balance-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: #ececec;
   border: 1px solid #ececec; border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
-.b-item { background: #fff; padding: 14px 16px; display: flex; flex-direction: column; gap: 5px; }
+.b-item { background: #fff; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; }
 .b-label { font-size: 12px; color: #9b9b9b; }
-.b-value { font-size: 24px; color: var(--el-color-primary-dark-2); }
+.b-value { font-size: 22px; color: var(--el-color-primary-dark-2); }
 .ledger { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
 .ledger-col { background: #fff; border: 1px solid #ececec; border-radius: 10px; padding: 14px 16px;
   min-height: 180px; }

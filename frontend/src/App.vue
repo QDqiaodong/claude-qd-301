@@ -22,6 +22,7 @@ export default {
       menu: [
         { path: '/yards', label: '堆场分区' },
         { path: '/materials', label: '材料台账' },
+        { path: '/reservations', label: '浇筑预扣' },
         { path: '/movements', label: '进出场流水' },
         { path: '/inspections', label: '安全巡检' }
       ]

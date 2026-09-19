@@ -3,7 +3,7 @@
     <header class="bar">
       <div>
         <h2>材料台账</h2>
-        <p class="tip">归属堆场可以直接在表格里换；结存是流水累出来的，这里改不动</p>
+        <p class="tip">账面结存是流水累出来的，这里改不动；可用余量 = 账面结存 − 占用中的浇筑预扣，能再预扣、也能出场的就看它</p>
       </div>
       <button class="act-btn solid" @click="openCreate">登记材料</button>
     </header>
@@ -11,7 +11,8 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>编号</th><th>名称</th><th>类别</th><th>所在堆场</th><th class="right">结存</th><th>状态</th>
+          <th>编号</th><th>名称</th><th>类别</th><th>所在堆场</th>
+          <th class="right">账面结存</th><th class="right">占用中预扣</th><th class="right">可用余量</th><th>状态</th>
         </tr>
       </thead>
       <tbody>
@@ -24,7 +25,9 @@
               <option v-for="y in yards" :key="y.id" :value="y.id">{{ y.title }}</option>
             </select>
           </td>
-          <td class="right num">{{ m.balance }}</td>
+          <td class="right">{{ m.balance }}</td>
+          <td class="right" :class="num(m.occupied) > 0 ? 'hold' : 'mute'">{{ num(m.occupied) }}</td>
+          <td class="right num">{{ num(m.available) }}</td>
           <td :class="m.state === '在库' ? 'ok' : 'mute'">{{ m.state }}</td>
         </tr>
       </tbody>
@@ -61,6 +64,9 @@ export default {
     async load() {
       this.list = await materialApi.fetch()
       this.yards = await yardApi.fetch()
+    },
+    num(v) {
+      return v == null ? 0 : v
     },
     async moveTo(row, yardId) {
       try {
@@ -109,6 +115,7 @@ export default {
 .num { font-weight: 600; color: var(--el-color-primary-dark-2); }
 .ok { color: var(--el-color-primary-dark-2); }
 .mute { color: #b5b5b5; }
+.hold { color: #b07a1e; font-weight: 600; }
 .inline-select { border: 1px solid #e5e5e5; border-radius: 5px; padding: 3px 8px; font-size: 12px;
   background: #fff; color: #555; max-width: 170px; }
 .act-btn { border-radius: 6px; font-size: 13px; padding: 7px 16px; cursor: pointer; }
